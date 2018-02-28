@@ -40,8 +40,8 @@ if (pdfplot == 'y'){ # register boolean value that will be used in by the plotti
 }
 
 for (f in seq_along(files)){ # loop over all screening files
-  subj = d$User[1]
-  tmp = unlist(strsplit(files[f],split = '_', fixed = T))[5]
+  tmp = unlist(strsplit(files[f],split = '_', fixed = T))[3]
+  subj = unlist(strsplit(tmp,split = '.', fixed = T))[1]
   print(paste('--- Processing file: ',files[f])) # print current filename to console
   
   ### !! function !! ###

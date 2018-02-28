@@ -12,10 +12,17 @@
 SYN_calculate_consistency = function(data){
   d = data
   chars = vector()
-  for (i in seq_along(d$UnicodeCharacter)){
-    chars[i] = toupper(rawToChar(as.raw(d$UnicodeCharacter[i])))  
-  }
   
+  if (is.element('AsciiCharacter',names(data))){
+    # a work-around for older synmap files where
+    # the a variable name was 'AsciiCharacter'. 
+    # Now 'UnicodeCharacter' is the standard
+    chars = d$AsciiCharacter
+  } else {
+    for (i in seq_along(d$UnicodeCharacter)){
+      chars[i] = toupper(rawToChar(as.raw(d$UnicodeCharacter[i])))  
+    }  
+  }
   
   omitIndex = is.nan(d$CharR)
   omittedGraphms = unique(chars[omitIndex])
@@ -25,7 +32,7 @@ SYN_calculate_consistency = function(data){
   nB = d$CharB/255
   normCols = cbind(nR,nG,nB) #bind into matrix  
   maxN = 3 #set the maximum number of mapping trials for a letter
-  inclIndex = table(chars) #index of graphemes to include
+  inclIndex = maxN == table(chars) #index of graphemes to include
   allGraphms = levels(as.factor(chars)) #vector of all graphemes
   allGraphms = allGraphms[inclIndex] #filter graphemes where trialN != maxN
   if (length(omittedGraphms) > 0){
@@ -302,7 +309,7 @@ SYN_write_consistency_color_file = function(data, subjectName){
 ### returns a color interpretation of raw data
 ### Furthermore, it writes a tab-delimited .txt file 
 ### with the RGB values of all trials, including NaN trials
-
+### Input is: a data frame with raw data from synMap
 SYN_get_all_trial_pairs = function(data){
   
   chars = vector() 
