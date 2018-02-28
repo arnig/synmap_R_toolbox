@@ -293,64 +293,85 @@ SYN_write_consistency_color_file = function(data, subjectName){
 
 
 
-# ADD text from UNAK version
+### Function 6
+### This function prints a PDF with an overview
+### of all grapheme-color pairs from a screening
+### session, regardless of whether the "no color"
+### option was used (which is excluded from the)
+### "synesthesia profile" PDF. In essence, the function
+### returns a color interpretation of raw data
+### Furthermore, it writes a tab-delimited .txt file 
+### with the RGB values of all trials, including NaN trials
 
 SYN_get_all_trial_pairs = function(data){
-  chars = vector()
   
+  chars = vector() 
   if (is.element('AsciiCharacter',names(data))){
+    # a work-around for older synmap files where
+    # the a variable name was 'AsciiCharacter'. 
+    # Now 'UnicodeCharacter' is the standard
     data$UnicodeCharacter = data$AsciiCharacter
   }
   
+  # translate all Unicode character numbers to 
+  # readable characters (uppercase)
   for (i in seq_along(data$UnicodeCharacter)){
     chars[i] = toupper(rawToChar(as.raw(data$UnicodeCharacter[i])))
   }
+  # append 'chars' to dataframe
   data$chars = chars
-  index = sort(data$chars)
-  charlvs = levels(as.factor(data$chars))
-  attemptlvs = levels(as.factor(data$AttemptNumber))
-  sort_dat = data[index,]
+  index = sort(data$chars) # get a sort index, if needed
+  charlvs = levels(as.factor(data$chars)) # get a single vector with all chars
+  attemptlvs = levels(as.factor(data$AttemptNumber)) # get the number of attempts
+  sort_dat = data[index,] # sort the data, using the index created earlier
   
+  # allocate some matrices for later
   colmat = matrix(nrow = length(charlvs), ncol = length(attemptlvs))
   pchmat = matrix(nrow = length(charlvs), ncol = length(attemptlvs))
   cexmat = matrix(nrow = length(charlvs), ncol = length(attemptlvs))
-  setcex = 2.4
-  
+  setcex = 2.4 # the size of the colored squares
+  # allocate a matrix for the output data
   rgb_mat = matrix(nrow = length(charlvs),ncol = (length(attemptlvs) * 3) + 1)
-  rgb_mat[,1] = charlvs
+  rgb_mat[,1] = charlvs # make first column a char column
   
   
-  for (j in seq_along(charlvs)){
-    for (k in seq_along(attemptlvs)){
+  for (j in seq_along(charlvs)){ # loop over all characters
+    for (k in seq_along(attemptlvs)){ # loop over all attempts
       current_row = data[data$chars == charlvs[j] & data$AttemptNumber == attemptlvs[k],]
+      # get rgb data into rgb_mat
       curr_rgb = c(current_row$CharR,current_row$CharG,current_row$CharB)
       rgb_mat[j,((k * 3)-1):((k * 3) + 1)] = curr_rgb
+      # define hex color matrix for use in plot()
       if (is.na(current_row$CharR)){
-        colmat[j,k] = NA
+        colmat[j,k] = NA # register NA/NaN as NA
       } else {
+        # ... otherwise, register the hex color in the matrix
         colmat[j,k] = rgb(red = current_row$CharR
                           ,green = current_row$CharG
                           ,blue = current_row$CharB
                           ,maxColorValue = 255)  
       }
-      
+      # do the same for other matrices
       if (is.na(colmat[j,k])){
-        pchmat[j,k] = 7
-        cexmat[j,k] = .8*setcex
+        # what kind of plot point should be used?
+        # If NA, then a square with X
+        pchmat[j,k] = 7 
+        cexmat[j,k] = .8*setcex # ... also, resize NA squares
       } else {
-        pchmat[j,k] = 22
-        cexmat[j,k] = setcex
+        pchmat[j,k] = 22 # if not NA, then square with bg color
+        cexmat[j,k] = setcex # ... and standard cex (size of square)
       }
-      
-      
     }
     
   }
+  # prepare PDF output
   pdfname = paste(data$User[1], 'all_trial_colors.pdf')
   pdf(pdfname, width = 2, height = 10)
   oldpar = par()
+  # prepare graphical parameters
   par(mar = c(2,0,3,0) + .1)
   par(bg = 'gray50')
+  # make an empty plot
   plot(1:10,(-1:-10)
        ,type = 'n'
        ,bty = 'n'
@@ -359,30 +380,33 @@ SYN_get_all_trial_pairs = function(data){
        ,yaxt = 'n'
        ,xlim = c(.5,length(attemptlvs) + 1.5))
   axis(side = 1, at = 2:4, labels = c('1','2','3'))
-
+  
+  # some padding for the plot
   xpadd = 0.5
   ypadd = 0.2
   y = seq(from = -1 + ypadd, to = -10 + ypadd, length.out = length(charlvs))
   
-  
+  # add the colored squares to the plot
   for (h in seq_along(attemptlvs)){
-    x = rep(h, length(charlvs))  
+    x = rep(h, length(charlvs)) # define x-coords for each column
     if (h == 1){
-      points(x,y,pch = charlvs)
+      points(x,y,pch = charlvs)  # first plot the graphemes
     } else {
+      # ... next, plot the colored squares
       points(x,y,bg = colmat[,(h-1)],pch = pchmat[,(h-1)], cex = cexmat[,(h-1)])
     }
   }
   
   
-  par(oldpar)
-  dev.off()  
+  par(oldpar) # reset graphical parameters
+  dev.off()  # and close graphical dev. to output PDF
   
+  # prepare output data file
   colnames(rgb_mat) = c('char','R1','G1','B1','R2','G2','B2','R3','G3','B3')
   #ordered_graph_col_pairs = cbind(charlvs,colmat) # hex colors
   write.table(rgb_mat
               ,file = paste(data$User[1], '_ordered_color_pairs.txt', sep = '')
               ,sep = '\t'
               ,row.names = F
-              )
+  )
 }
