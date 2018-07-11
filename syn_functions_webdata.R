@@ -167,10 +167,9 @@ SYN_plot_profile = function(data,subj,omittedGraphms,printPDF,BGcontrEnhancement
        ,xlab = ' '
        ,ylim = c(-0.5,3))
   # define a matrix with hex color information
-  colmat = data[,3:6] #get color information for each grapheme and all trials
-  
+
   # loop through columns in colmat
-  for (i in 1:dim(colmat)[2]){
+  for (i in 1:3){#dim(colmat)[2]){
     # set the position of graphemes within plot, dependent on the i-th appearance of a grapheme
     if (i == 1){
       ypos = 1.3
@@ -181,11 +180,11 @@ SYN_plot_profile = function(data,subj,omittedGraphms,printPDF,BGcontrEnhancement
     }
     ### If a grapheme is too much like the background, a dark rectangle will be plotted
     ### as background for that grapheme. Here are some settings for that proces:
-    scaleX = (dim(colmat)[1])/70 #scaler for rectangle in x-coords
+    scaleX = length(data[,1])/70 #scaler for rectangle in x-coords
     scaleY = 0.17 #scaler for rectangle in y-coords
     rectcol = 'gray40' # color for backgroun rectangle
     #loop through colmat rows
-    for (j in 1:dim(colmat)[1]){
+    for (j in seq_along(data[,1])){
       #print average color of grapheme j
       if (i == 1){
         if (BGcontrEnhancement){
@@ -205,10 +204,10 @@ SYN_plot_profile = function(data,subj,omittedGraphms,printPDF,BGcontrEnhancement
                  ,col = rectcol)
           }  
         }
-        text(.95*j+.5,2.2,labels = data[j,1], col = colmat[j,4], cex = 1.5, font = 2) 
+        text(.95*j+.5,2.2,labels = data[j,1], col = data[j,6], cex = 1.5, font = 2) 
       }      
       #print the i-th color of grapheme j
-      text(.95*j+.5,ypos,labels = data[j,1], col = colmat[j,i], cex = 1.2, font = 2)
+      text(.95*j+.5,ypos,labels = data[j,1], col = data[j,i + 2], cex = 1.2, font = 2)
     }
   }  
   center = mean(par('usr')[1:2]) # get the center coordinates of the plot
